@@ -1,0 +1,41 @@
+1、修复Bug
+有的时候，我们使用Claude这样的AI模型会忽略一些细节而导致出现很多问题，使用下面这个COT结构的提示词，能有效帮助Claude去分析错误的原因，并制定修复计划。
+
+提示词：@page.tsx 
+    I got this error:
+        {{erros}}
+    Use Chain of thought reasoning to find the core issue of this error, then create a step by step plan to fix the error.
+注：step by step 是利用思维链编写提示词的一个魔法用语，用于启发AI大模型进行推理然后得出回答。使用了该魔法的对话，会比没有使用该对话的回答质量上有提升。
+
+2、 新特征提示（New feature Prompt）
+当成功执行一条命令后，再次引用当前的文档，以便让AI了解下一个模块的工作范围。使用这些信息可以让AI在编写代码之前了解更多的信息，这一步将有助于消除生成代码的幻觉问题。
+
+提示词：Great. Header looks good.Now we move to "x" section. Refer to @frontend-guidelines.md to understand the scope of work for this feature.Before implementation if you need more clarification or have any questions, ask me!
+
+3、响应结构
+这个结构用于向AI提供更新，表示现在处理的任务已经完成，可以开始接下来的任务。
+1、提供更新：「Header菜单已经完美居中」2、提供下一个任务：「现在我们需要一个登录和注册按钮」3、标注正确的文档：「查看文档，并解释你如何实现这些需求」
+提示词：Header menu is now aligned in center perfectly.Now we need a sign in and sign up buttons.Check @frontend-guidelines.md and explain how you will implement this.
+
+4、progress.md 文件
+使用这个提示词去追踪所有的工作，这可以为AI提供进度上下文，并解决错误。
+在每个完成的步骤结束时，将你的工作记录在progress.md 文档中。然后依次回答下面三个问题，不要错过任何信息。
+我们实施了哪些功能？我们遇到了什么问题？我们是如何修复这些错误的。
+
+
+5、process-status 文件
+我们再次使用AI的时候，需要知道以前做过了哪些内容。因此这个文件就是帮助我们保留工作日志，并了解已经完成的工作和剩余的工作。
+在回话结束的时候，将你的工作日志记录在 process-status.md 文件中。
+首先，检测 process-status.md 文件，了解我们这次对话实现的所有功能。然后写一份详细的会议报告，并为下一次工作提供详细的背景信息。
+
+6、Cursor Agent Hack
+Cursor的Agent模式可能会过度执行操作，导致之前开发好的功能失效。
+提示词：阅读@（文档名称）中的指令，去了解这个功能的工作范围。使用思维链推理来创建一个循序渐进的执行计划。确保你解释此功能的每个部分的工作原理，并提供宏观级别的详细信息。将这些项目分解为详细的编号步骤。
+Read instructions in @ (document name) to understand the scope of work for this feature.
+Use chain of thought reasoning to create a step by step implementation plan.
+Ensure you explain how every section of this feature works providing macro-level details.
+Break these items into detailed numbered steps.
+执行该提示词后，可以验证所有的内容是否与请求一致并批准。这有助于解决Cursor Agent进行不必要编辑的问题。
+7、附加文件
+创建一个文件夹，将所有核心的文档都存放在该文件夹下。包括但不限于：项目需求文档、应用流程文档、前端开发文档、后端架构文档、技术栈文档、文件结构文档
+当然，你也可以使用作者开发的下面这个工具，可以为AI生成相关的文档，整个过程大概需要20-30分钟。网址：https://www.codeguide.dev/

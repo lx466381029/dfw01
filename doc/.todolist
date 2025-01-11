@@ -1,0 +1,49 @@
+# 项目待办事项清单
+
+## 项目结构设置
+- [x] 创建基本项目结构
+- [x] 设置 requirements.txt
+- [ ] 创建主要代码目录结构
+
+## 资源文件夹设置
+- [ ] 创建资源目录结构
+  - [ ] /assets
+    - [ ] /fonts (字体文件)
+    - [ ] /images (图片资源)
+    - [ ] /audio
+      - [ ] /music (背景音乐)
+      - [ ] /sfx (音效)
+
+## 字体需求
+- [ ] 思源黑体 (Source Han Sans)
+  - 文件名：SourceHanSans-Bold.ttc
+  - 用途：游戏中文和英文显示
+  - 路径：/assets/fonts/SourceHanSans-Bold.ttc
+
+## 基础功能实现
+- [ ] 游戏主循环搭建
+- [ ] 输入处理系统
+- [ ] 精灵系统
+- [ ] 碰撞检测系统
+- [ ] UI系统
+- [ ] 场景管理系统
+
+## 性能优化
+- [ ] 实现对象池
+- [ ] 优化绘制系统
+- [ ] 资源加载优化
+
+## 音效资源需求
+### 背景音乐
+- [ ] background_music.mp3
+  - 大小：预计 2-5MB
+  - 格式：MP3
+  - 用途：游戏背景音乐
+  - 路径：/assets/audio/music/background_music.mp3
+
+### 音效
+- [ ] click.wav
+  - 大小：预计 50-100KB
+  - 格式：WAV
+  - 用途：按钮点击音效
+  - 路径：/assets/audio/sfx/click.wav 
