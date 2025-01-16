@@ -39,6 +39,14 @@ class GameBoard:
         dice_x = self.board_x + self.board_pixel_width - 300  # 右侧偏移
         dice_y = self.board_y + self.board_pixel_height - 300  # 下方偏移
         self.dice = Dice(dice_x, dice_y)
+        
+        # 注册骰子回调
+        self.dice_result = None
+    
+    def _on_dice_roll_complete(self, value):
+        """骰子投掷完成的回调函数"""
+        self.dice_result = value
+        print(f"骰子投掷结果: {value}")
     
     def _generate_track_cells(self):
         """生成闭环轨道的所有格子位置"""
@@ -98,6 +106,7 @@ class GameBoard:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             # 处理骰子点击
             if self.dice.handle_click(event.pos):
+                self.dice.roll(callback=self._on_dice_roll_complete)
                 return None
         
         elif event.type == pygame.MOUSEMOTION:

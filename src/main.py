@@ -12,7 +12,7 @@ class Game:
         
         pygame.init()
         self.screen = pygame.display.set_mode((1920, 1080))
-        pygame.display.set_caption("冒险大富翁")
+        pygame.display.set_caption("冒险棋")
         self.clock = pygame.time.Clock()
         self.current_scene = None
         self.running = True
@@ -73,7 +73,8 @@ class Game:
             self.current_scene = self.scenes['game_board']
     
     def _update(self):
-        pass
+        if self.current_scene:
+            self.current_scene.update()
     
     def _draw(self):
         if self.current_scene:
