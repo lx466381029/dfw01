@@ -53,7 +53,7 @@ class Dice:
             self._draw_dots(surface, value)
             
             self.dice_images.append(surface)
-        print(f"预渲染完成: 生成了 {len(self.dice_images)} 个骰子图像")
+        #print(f"预渲染完成: 生成了 {len(self.dice_images)} 个骰子图像")
     
     def _draw_dots(self, surface: pygame.Surface, value: int):
         """在骰子表面绘制点数"""
@@ -85,7 +85,7 @@ class Dice:
     def roll(self, callback: Optional[Callable[[int], None]] = None):
         """开始骰子投掷动画"""
         if not self.is_rolling:
-            print("开始投掷骰子")
+            print("[Dice] 开始投掷动画")
             self.is_rolling = True
             self.roll_frames = 0
             self.rotation_angle = 0.0
@@ -128,27 +128,21 @@ class Dice:
             # 保持角度在0-360度之间
             self.rotation_angle = self.rotation_angle % 360
             
-            print(f"帧 {self.roll_frames}/{self.max_roll_frames} - "
-                  f"速度: {self.rotation_speed:.1f}°/s, "
-                  f"角度: {self.rotation_angle:.1f}°")
-            
             if self.roll_frames < self.max_roll_frames:
                 # 骰子滚动时随机显示点数
                 if self.roll_frames % 3 == 0:  # 每3帧改变一次点数
-                    old_value = self.value
                     self.value = random.randint(1, 6)
-                    print(f"点数变化: {old_value} -> {self.value}")
             else:
                 # 停止滚动，确定最终点数
                 final_value = random.randint(1, 6)
-                print(f"动画结束: 最终点数为 {final_value}")
+                print(f"[Dice] 动画结束 - 最终点数: {final_value}")
                 self.value = final_value
                 self.is_rolling = False
                 self.rotation_speed = 0
                 # 确保最终角度是90的倍数
                 self.rotation_angle = round(self.rotation_angle / 90) * 90
                 if self.roll_callback:
-                    self.roll_callback(self.value)
+                    self.roll_callback(final_value)  # 使用final_value而不是self.value
     
     def draw(self, screen: pygame.Surface):
         """绘制骰子"""
@@ -194,8 +188,7 @@ class Dice:
         """处理点击事件"""
         click_rect = pygame.Rect(self.x, self.y, self.click_area, self.click_area)
         if click_rect.collidepoint(pos) and not self.is_rolling:
-            print("骰子被点击")
-            self.roll()
+            print("[Dice] 开始投掷")
             return True
         return False
     
@@ -205,4 +198,4 @@ class Dice:
         was_hovered = self.is_hovered
         self.is_hovered = click_rect.collidepoint(pos)
         if self.is_hovered != was_hovered:
-            print("鼠标" + ("进入" if self.is_hovered else "离开") + "骰子区域") 
+            pass  # 状态已在上面更新，这里不需要额外操作 
