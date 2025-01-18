@@ -11,6 +11,7 @@ class Player:
         self.image = pygame.transform.scale(self.image, (self.image_size, self.image_size))
         self.rect = self.image.get_rect()
         self.cell_size = cell_size
+        self.border_width = 5  # 添加边框宽度属性
         
         # 位置信息
         self.x = x
@@ -79,11 +80,15 @@ class Player:
         print(f"[Player] 移动到新位置 - 目标: ({self.target_x}, {self.target_y})")
         
     def _update_rect_position(self):
-        """更新精灵的矩形位置，确保居中"""
-        # 计算图片在格子中的偏移量，使其居中
-        offset = (self.cell_size - self.image_size) // 2
-        self.rect.x = self.x + offset
-        self.rect.y = self.y + offset
+        """更新精灵的矩形位置，确保居中
+        
+        计算方式：
+        1. 使用给定的x,y坐标作为中心点
+        2. 直接设置精灵的中心点位置
+        """
+        # 直接使用给定的坐标作为中心点
+        self.rect.centerx = self.x
+        self.rect.centery = self.y
         
     def _ease_out_quad(self, t: float) -> float:
         """缓动函数：渐出二次方"""

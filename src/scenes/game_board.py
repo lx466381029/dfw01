@@ -5,6 +5,7 @@ from components.dice import Dice
 from components.player import Player
 from components.board import Board
 from components.game_time import GameTime
+from components.save_manager import SaveManager
 
 class GameBoard:
     def __init__(self, screen):
@@ -12,52 +13,70 @@ class GameBoard:
         self.screen_width = screen.get_width()
         self.screen_height = screen.get_height()
         
+        self._initialize_game_state()
+        
+    def _initialize_game_state(self):
+        """初始化或重置游戏状态"""
+        print("[GameBoard] 初始化游戏状态")
+        
         # 棋盘配置
-        self.cell_size = 110
+        self.cell_size = 115
         self.board_width = 16
         self.board_height = 9
         self.border_width = 5
         
-        # 计算棋盘位置使其居中
+        # 计算棋盘位置
         self.board_pixel_width = self.cell_size * self.board_width
         self.board_pixel_height = self.cell_size * self.board_height
-        self.board_x = (self.screen_width - self.board_pixel_width) // 2
-        self.board_y = (self.screen_height - self.board_pixel_height) // 2
+        
+        # 添加右下方偏移量
+        right_offset = 50
+        down_offset = 20
+        
+        self.board_x = (self.screen_width - self.board_pixel_width) // 2 + right_offset
+        self.board_y = (self.screen_height - self.board_pixel_height) // 2 + down_offset
         
         # 颜色定义
         self.colors = {
             'background': pygame.Color('#F5F5F5'),
             'cell': pygame.Color('#FFFFFF'),
-            'border': pygame.Color('#424242'),
+            'border': pygame.Color('#AAAAAA'),
             'highlight': pygame.Color('#E3F2FD')
         }
         
         # 创建棋盘管理器
         self.board = Board()
-        
-        # 生成轨道格子位置
         self.cells = self.board.path
-        
-        # 当前高亮的格子
         self.highlighted_cell = None
         
         # 创建骰子
-        dice_x = self.board_x + self.board_pixel_width - 300  # 右侧偏移
-        dice_y = self.board_y + self.board_pixel_height - 300  # 下方偏移
+        dice_x = self.board_x + self.board_pixel_width - 375
+        dice_y = self.board_y + self.board_pixel_height - 340
         self.dice = Dice(dice_x, dice_y)
         
         # 创建玩家
-        start_x = self.board_x
-        start_y = self.board_y
+        start_cell = self.cells[0]
+        start_x = self.board_x + start_cell[0] * (self.cell_size - self.border_width)
+        start_y = self.board_y + start_cell[1] * (self.cell_size - self.border_width)
+        start_x += self.cell_size / 2
+        start_y += self.cell_size / 2
         self.player = Player(start_x, start_y, self.cell_size)
         self.player_cell_index = 0
         
-        # 注册骰子回调
+        # 游戏状态
         self.dice_result = None
         self.can_roll = True
         
         # 创建时间系统
         self.game_time = GameTime()
+        
+        # 创建存档管理器
+        self.save_manager = SaveManager()
+        
+    def reset(self):
+        """重置游戏状态"""
+        print("[GameBoard] 重置游戏状态")
+        self._initialize_game_state()
     
     def _on_dice_roll_complete(self, value):
         """骰子投掷完成的回调函数"""
@@ -70,8 +89,12 @@ class GameBoard:
         # 转换路径坐标为实际像素坐标
         pixel_path = []
         for x, y in path:
-            pixel_x = self.board_x + x * self.cell_size
-            pixel_y = self.board_y + y * self.cell_size
+            # 计算格子的实际像素位置，考虑边框重叠
+            pixel_x = self.board_x + x * (self.cell_size - self.border_width)
+            pixel_y = self.board_y + y * (self.cell_size - self.border_width)
+            # 加上半个格子大小得到中心点
+            pixel_x += self.cell_size / 2
+            pixel_y += self.cell_size / 2
             pixel_path.append((pixel_x, pixel_y))
         
         # 更新玩家位置
@@ -108,14 +131,63 @@ class GameBoard:
         return cells
     
     def _get_cell_rect(self, cell_pos):
-        """获取指定格子的矩形区域"""
+        """获取指定格子的矩形区域
+        
+        Args:
+            cell_pos: 格子的(x, y)坐标
+            
+        Returns:
+            pygame.Rect: 格子的矩形区域，包括位置和大小。
+                       格子之间会重叠border_width像素，以实现边框的视觉统一。
+        """
         x, y = cell_pos
+        # 计算格子位置时减去border_width，使相邻格子重叠
         return pygame.Rect(
-            self.board_x + x * self.cell_size,
-            self.board_y + y * self.cell_size,
+            self.board_x + x * (self.cell_size - self.border_width),
+            self.board_y + y * (self.cell_size - self.border_width),
             self.cell_size,
             self.cell_size
         )
+    
+    def _load_game_state(self):
+        """加载游戏状态"""
+        save_data = self.save_manager.load_game()
+        if save_data:
+            # 恢复玩家位置
+            self.player_cell_index = save_data["player_position"]
+            cell_pos = self.cells[self.player_cell_index]
+            # 计算格子的实际像素位置，考虑边框重叠
+            player_x = self.board_x + cell_pos[0] * (self.cell_size - self.border_width)
+            player_y = self.board_y + cell_pos[1] * (self.cell_size - self.border_width)
+            # 加上半个格子大小得到中心点
+            player_x += self.cell_size / 2
+            player_y += self.cell_size / 2
+            self.player.x = player_x
+            self.player.y = player_y
+            self.player._update_rect_position()
+            
+            # 恢复时间状态
+            self.game_time.year = save_data["year"]
+            self.game_time.month = save_data["month"]
+            self.game_time.day = save_data["day"]
+            self.game_time.time_of_day = save_data["time_of_day"]
+            
+            print(f"[GameBoard] 已加载存档 - 位置: {self.player_cell_index}, "
+                  f"时间: {self.game_time.year}年{self.game_time.month}月{self.game_time.day}日 "
+                  f"{self.game_time.time_of_day.value}")
+    
+    def _save_game_state(self):
+        """保存游戏状态"""
+        game_data = {
+            "player_position": self.player_cell_index,
+            "year": self.game_time.year,
+            "month": self.game_time.month,
+            "day": self.game_time.day,
+            "time_of_day": self.game_time.time_of_day
+        }
+        
+        if self.save_manager.save_game(game_data):
+            print("[GameBoard] 游戏状态已保存")
     
     def update(self):
         """更新游戏状态"""
@@ -125,8 +197,10 @@ class GameBoard:
         # 更新玩家
         self.player.update(current_time)
         
-        # 如果玩家不在移动中，允许投骰子
+        # 如果玩家不在移动中，允许投骰子并保存游戏
         if not self.player.is_moving:
+            if not self.can_roll:  # 移动刚结束
+                self._save_game_state()
             self.can_roll = True
     
     def draw(self):
@@ -158,6 +232,11 @@ class GameBoard:
         self.player.draw(self.screen)
     
     def handle_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_s:  # 按S键保存
+                self._save_game_state()
+                return None
+        
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             # 只有在允许投骰子时才处理点击
             if self.can_roll and self.dice.handle_click(event.pos):

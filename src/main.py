@@ -14,15 +14,14 @@ class Game:
         self.screen = pygame.display.set_mode((1920, 1080))
         pygame.display.set_caption("冒险棋")
         self.clock = pygame.time.Clock()
-        self.current_scene = None
-        self.running = True
         
         # 初始化场景
         self.scenes = {
             'main_menu': MainMenu(self.screen),
             'game_board': GameBoard(self.screen)
         }
-        self.current_scene = self.scenes['main_menu']
+        self.current_scene = 'main_menu'  # 使用字符串键
+        self.running = True
     
     def _setup_working_directory(self):
         """确保工作目录是项目根目录"""
@@ -38,48 +37,55 @@ class Game:
         
         print(f"工作目录设置为: {os.getcwd()}")
     
-    def run(self):
-        while self.running:
-            self._handle_events()
-            self._update()
-            self._draw()
-            self.clock.tick(60)
-        
-        pygame.quit()
-        sys.exit()
-    
-    def _handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                if isinstance(self.current_scene, GameBoard):
-                    self.current_scene = self.scenes['main_menu']
-            
-            if self.current_scene:
-                result = self.current_scene.handle_event(event)
-                if result:
-                    self._handle_scene_result(result)
-    
-    def _handle_scene_result(self, result):
-        if result == 'quit':
+    def handle_scene_action(self, action):
+        """处理场景返回的动作"""
+        if action == "quit":
             self.running = False
-        elif result == 'new_game':
-            self.current_scene = self.scenes['game_board']
-        elif result == 'continue_game':
-            self.current_scene = self.scenes['game_board']
-        elif result == 'confirm_new_game':
-            # TODO: 实现确认新游戏对话框
-            self.current_scene = self.scenes['game_board']
-    
-    def _update(self):
-        if self.current_scene:
-            self.current_scene.update()
-    
-    def _draw(self):
-        if self.current_scene:
-            self.current_scene.draw()
-        pygame.display.flip()
+        elif action == "new_game":
+            print("[Game] 切换到游戏场景（新游戏）")
+            self.current_scene = "game_board"
+            # 重置游戏状态
+            self.scenes["game_board"].reset()
+        elif action == "continue_game":
+            print("[Game] 切换到游戏场景（继续游戏）")
+            self.current_scene = "game_board"
+        elif action == "main_menu":
+            print("[Game] 返回主菜单")
+            self.current_scene = "main_menu"
+            # 刷新主菜单状态
+            self.scenes["main_menu"].refresh()
+            
+    def run(self):
+        """运行游戏主循环"""
+        while self.running:
+            # 处理事件
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE and self.current_scene == "game_board":
+                        # 保存游戏状态
+                        self.scenes["game_board"]._save_game_state()
+                        # 返回主菜单
+                        self.handle_scene_action("main_menu")
+                        continue
+                
+                # 处理当前场景的事件
+                action = self.scenes[self.current_scene].handle_event(event)
+                if action:
+                    self.handle_scene_action(action)
+            
+            # 更新当前场景
+            self.scenes[self.current_scene].update()
+            
+            # 绘制当前场景
+            self.scenes[self.current_scene].draw()
+            
+            # 更新显示
+            pygame.display.flip()
+            
+            # 控制帧率
+            self.clock.tick(60)
 
 if __name__ == '__main__':
     game = Game()
