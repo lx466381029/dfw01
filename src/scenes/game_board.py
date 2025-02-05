@@ -15,6 +15,9 @@ class GameBoard:
         
         self._initialize_game_state()
         
+        # 修改时间显示文本的渲染方式
+        self.time_font = pygame.font.Font("assets/fonts/SourceHanSans-Bold.ttc", 24)
+        
     def _initialize_game_state(self):
         """初始化或重置游戏状态"""
         print("[GameBoard] 初始化游戏状态")
@@ -104,8 +107,8 @@ class GameBoard:
         self.player_cell_index = (self.player_cell_index + value) % len(self.cells)
         
         # 推进时间
-        self.game_time.advance()
-        print(f"[GameBoard] 时间推进 - {self.game_time.year}年{self.game_time.month}月{self.game_time.day}日 {self.game_time.time_of_day.value}")
+        self.game_time.advance_month()
+        print(f"[GameBoard] 时间推进 - {self.game_time.year}年{self.game_time.month}月 {self.game_time.current_season}")
         
         # 禁用骰子直到移动完成
         self.can_roll = False
@@ -149,6 +152,17 @@ class GameBoard:
             self.cell_size
         )
     
+    def _save_game_state(self):
+        """保存游戏状态"""
+        game_data = {
+            "player_position": self.player_cell_index,
+            "year": self.game_time.year,
+            "month": self.game_time.month
+        }
+        
+        if self.save_manager.save_game(game_data):
+            print("[GameBoard] 游戏状态已保存")
+    
     def _load_game_state(self):
         """加载游戏状态"""
         save_data = self.save_manager.load_game()
@@ -169,25 +183,9 @@ class GameBoard:
             # 恢复时间状态
             self.game_time.year = save_data["year"]
             self.game_time.month = save_data["month"]
-            self.game_time.day = save_data["day"]
-            self.game_time.time_of_day = save_data["time_of_day"]
             
             print(f"[GameBoard] 已加载存档 - 位置: {self.player_cell_index}, "
-                  f"时间: {self.game_time.year}年{self.game_time.month}月{self.game_time.day}日 "
-                  f"{self.game_time.time_of_day.value}")
-    
-    def _save_game_state(self):
-        """保存游戏状态"""
-        game_data = {
-            "player_position": self.player_cell_index,
-            "year": self.game_time.year,
-            "month": self.game_time.month,
-            "day": self.game_time.day,
-            "time_of_day": self.game_time.time_of_day
-        }
-        
-        if self.save_manager.save_game(game_data):
-            print("[GameBoard] 游戏状态已保存")
+                  f"时间: {self.game_time.year}年{self.game_time.month}月 {self.game_time.current_season}")
     
     def update(self):
         """更新游戏状态"""
@@ -224,9 +222,7 @@ class GameBoard:
         self.dice.draw(self.screen)
         
         # 绘制时间（在骰子上方）
-        time_x = self.dice.x + self.dice.click_area // 2
-        time_y = self.dice.y
-        self.game_time.draw(self.screen, time_x, time_y)
+        self._draw_time_system()
         
         # 绘制玩家
         self.player.draw(self.screen)
@@ -257,4 +253,26 @@ class GameBoard:
                     self.highlighted_cell = cell
                     break
         
-        return None 
+        return None
+    
+    def _draw_time_system(self):
+        """绘制时间系统"""
+        time_text = self.game_time.get_time_string()
+        text_surface = self.time_font.render(time_text, True, self.game_time.current_season_color)
+        
+        # 创建背景框
+        bg_rect = pygame.Rect(0, 0, text_surface.get_width()+20, text_surface.get_height()+10)
+        
+        # 调整位置到骰子区域上方
+        # 使用骰子的x, y位置
+        dice_x = self.dice.x  # 骰子的x坐标
+        dice_y = self.dice.y  # 骰子的y坐标
+        
+        # 将时间显示放在骰子上方
+        bg_rect.centerx = dice_x + 90
+        bg_rect.bottom = dice_y -1
+        
+        # 绘制背景和文字
+        pygame.draw.rect(self.screen, (255, 255, 255), bg_rect, border_radius=5)
+        pygame.draw.rect(self.screen, (200, 200, 200), bg_rect, 1, border_radius=5)
+        self.screen.blit(text_surface, (bg_rect.x+10, bg_rect.y+5)) 

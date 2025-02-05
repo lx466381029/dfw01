@@ -2,14 +2,14 @@ import pygame
 import math
 from typing import List, Tuple
 
-class Player:
+class Player(pygame.sprite.Sprite):
     def __init__(self, x: int, y: int, cell_size: int):
+        super().__init__()
         # 加载英雄图片
-        self.image = pygame.image.load('assets/images/role/baby.png')
-        # 缩放图片以适应格子大小（格子大小的80%）
-        self.image_size = int(cell_size * 0.8)
-        self.image = pygame.transform.scale(self.image, (self.image_size, self.image_size))
+        self.image = pygame.image.load('assets/images/characters/character.png')
+        self.image = pygame.transform.scale(self.image, (cell_size, cell_size))
         self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
         self.cell_size = cell_size
         self.border_width = 5  # 添加边框宽度属性
         
