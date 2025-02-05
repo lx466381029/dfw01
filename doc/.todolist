@@ -46,4 +46,13 @@
   - 大小：预计 50-100KB
   - 格式：WAV
   - 用途：按钮点击音效
-  - 路径：/assets/audio/sfx/click.wav 
+  - 路径：/assets/audio/sfx/click.wav
+
+## 资源需求更新
+
+### 图片资源
+- [ ] character.png
+  - 大小：80x80 像素 
+  - 格式：PNG（带透明度）
+  - 用途：玩家角色形象
+  - 路径：/assets/images/characters/character.png 
