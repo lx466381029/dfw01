@@ -1,17 +1,30 @@
 import pygame
 import math
 from typing import List, Tuple
+import os
+from pathlib import Path
+from utils.font_manager import FontManager
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x: int, y: int, cell_size: int):
         super().__init__()
-        # 加载英雄图片
-        self.image = pygame.image.load('assets/images/characters/character.png')
-        self.image = pygame.transform.scale(self.image, (cell_size, cell_size))
+        # 加载角色图片
+        image_path = os.path.join("assets", "images", "characters", "character.png")
+        original_image = pygame.image.load(image_path)
+        self.image = pygame.transform.scale(original_image, (cell_size, cell_size))
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
         self.cell_size = cell_size
         self.border_width = 5  # 添加边框宽度属性
+        
+        # 名称相关
+        self.name = "冒险者"
+        self.name_font = FontManager.get_instance().get_font(24)
+        self.name_color = (33, 33, 33)  # 深灰色
+        self.name_editing = False
+        self.name_surface = None
+        self.name_underline = None  # 添加下划线表面
+        self._update_name_surface()
         
         # 位置信息
         self.x = x
@@ -30,6 +43,35 @@ class Player(pygame.sprite.Sprite):
         # 初始化位置
         self._update_rect_position()
         
+    def _update_name_surface(self):
+        """更新名称的渲染表面"""
+        # 渲染名称文本
+        self.name_surface = self.name_font.render(self.name, True, self.name_color)
+        
+        # 创建下划线
+        underline_height = 2
+        underline_surface = pygame.Surface((self.name_surface.get_width(), underline_height))
+        underline_surface.fill(self.name_color)
+        self.name_underline = underline_surface
+
+    def set_name(self, name: str):
+        """设置角色名称"""
+        if name.strip():  # 确保名称不是空白
+            self.name = name.strip()
+            self._update_name_surface()
+
+    def toggle_name_editing(self):
+        """切换名称编辑状态"""
+        self.name_editing = not self.name_editing
+        self._update_name_surface()
+
+    def handle_click(self, pos: Tuple[int, int]) -> bool:
+        """处理点击事件"""
+        # 计算名称显示区域
+        name_rect = self.name_surface.get_rect()
+        name_rect.topleft = (self.rect.x, self.rect.y - 30)  # 在角色上方显示
+        return name_rect.collidepoint(pos)
+
     def update(self, current_time: int):
         if not self.is_moving:
             return
@@ -100,4 +142,5 @@ class Player(pygame.sprite.Sprite):
         
     def draw(self, screen: pygame.Surface):
         """绘制英雄"""
+        # 绘制角色
         screen.blit(self.image, self.rect) 
